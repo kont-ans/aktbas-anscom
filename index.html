@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة العملات السورية - السوق الحر والبنك المركزي 💱</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="nav-brand">💰 الأسواق السورية</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active">💱 العملات والذهب</a>
+            <a href="commodities.html" class="nav-link">⛽ النفط والسلع</a>
+            <a href="stocks.html" class="nav-link">📈 الأسهم والتكنولوجيا</a>
+        </div>
+    </nav>
+
+    <!-- شريط الأخبار المتحرك -->
+    <div class="ticker-container">
+        <div class="ticker-wrap" id="tickerContent">
+            <!-- يتم ملؤه ديناميكياً -->
+        </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-container">
+        <!-- رأس الصفحة -->
+        <header class="app-header">
+            <h1>💱 حاسبة العملات السورية</h1>
+            <p>أسعار الصرف الفورية - السوق الحر والبنك المركزي</p>
+        </header>
+
+        <!-- تنبيه فرق السعر -->
+        <div class="alert-box">
+            <h3>⚠️ تنبيه هام - فرق سعر الصرف</h3>
+            <p>يوجد فرق كبير بين سعر الصرف في السوق الحر والبنك المركزي</p>
+            <div class="rates-comparison">
+                <div class="rate-box free-market">
+                    <div class="rate-box-title">🏪 سعر السوق الحر</div>
+                    <div class="rate-box-value" id="freeMarketRate">--</div>
+                    <div class="rate-box-note">ليرة سورية للدولار الواحد</div>
+                </div>
+                <div class="rate-box central-bank">
+                    <div class="rate-box-title">🏦 سعر البنك المركزي</div>
+                    <div class="rate-box-value" id="centralBankRate">--</div>
+                    <div class="rate-box-note">ليرة سورية للدولار الواحد</div>
+                </div>
+            </div>
+            <div class="rate-difference">
+                الفرق: <span id="rateDifference">--</span>
+            </div>
+        </div>
+
+        <!-- بطاقات العملات الرئيسية -->
+        <div class="currency-grid" id="currencyCards">
+            <!-- USD Card -->
+            <div class="currency-card usd">
+                <div class="currency-header">
+                    <span class="currency-flag">🇺🇸</span>
+                    <div>
+                        <h3>الدولار الأمريكي</h3>
+                        <span class="currency-code">USD</span>
+                    </div>
+                </div>
+                <div class="currency-rate" id="usdMarketRate">--</div>
+                <div class="rate-details">
+                    <div class="rate-detail">
+                        <span class="rate-detail-label">🏪 سوق حر</span>
+                        <span class="rate-detail-value market" id="usdFree">--</span>
+                    </div>
+                    <div class="rate-detail">
+                        <span class="rate-detail-label">🏦 بنك مركزي</span>
+                        <span class="rate-detail-value bank" id="usdBank">--</span>
+                    </div>
+                </div>
+                <div class="rate-change" id="usdChange">--</div>
+            </div>
+
+            <!-- EUR Card -->
+            <div class="currency-card eur">
+                <div class="currency-header">
+                    <span class="currency-flag">🇪🇺</span>
+                    <div>
+                        <h3>اليورو</h3>
+                        <span class="currency-code">EUR</span>
+                    </div>
+                </div>
+                <div class="currency-rate" id="eurMarketRate">--</div>
+                <div class="rate-details">
+                    <div class="rate-detail">
+                        <span class="rate-detail-label">🏪 سوق حر</span>
+                        <span class="rate-detail-value market" id="eurFree">--</span>
+                    </div>
+                    <div class="rate-detail">
+                        <span class="rate-detail-label">🏦 بنك مركزي</span>
+                        <span class="rate-detail-value bank" id="eurBank">--</span>
+                    </div>
+                </div>
+                <div class="rate-change" id="eurChange">--</div>
+            </div>
+
+            <!-- GBP Card -->
+            <div class="currency-card gbp">
+                <div class="currency-header">
+                    <span class="currency-flag">🇬🇧</span>
+                    <div>
+                        <h3>الجنيه الإسترليني</h3>
+                        <span class="currency-code">GBP</span>
+                    </div>
+                </div>
+                <div class="currency-rate" id="gbpMarketRate">--</div>
+                <div class="rate-details">
+                    <div class="rate-detail">
+                        <span class="rate-detail-label">🏪 سوق حر</span>
+                        <span class="rate-detail-value market" id="gbpFree">--</span>
+                    </div>
+                    <div class="rate-detail">
+                        <span class="rate-detail-label">🏦 بنك مركزي</span>
+                        <span class="rate-detail-value bank" id="gbpBank">--</span>
+                    </div>
+                </div>
+                <div class="rate-change" id="gbpChange">--</div>
+            </div>
+        </div>
+
+        <!-- حاسبة تحويل العملات -->
+        <section class="calculator-section">
+            <h2 class="calculator-title">🔄 محول العملات</h2>
+            
+            <div class="converter-grid">
+                <!-- من -->
+                <div class="converter-box">
+                    <div class="converter-label">من</div>
+                    <input type="number" class="converter-input" id="fromAmount" value="1" min="0" step="any">
+                    <select class="currency-select" id="fromCurrency">
+                        <option value="USD">🇺🇸 الدولار الأمريكي (USD)</option>
+                        <option value="EUR">🇪🇺 اليورو (EUR)</option>
+                        <option value="GBP">🇬🇧 الجنيه الإسترليني (GBP)</option>
+                        <option value="SYP">🇸🇾 الليرة السورية (SYP)</option>
+                        <option value="SAR">🇸🇦 الريال السعودي (SAR)</option>
+                        <option value="AED">🇦🇪 الدرهم الإماراتي (AED)</option>
+                        <option value="TRY">🇹🇷 الليرة التركية (TRY)</option>
+                        <option value="IQD">🇮🇶 الدينار العراقي (IQD)</option>
+                        <option value="JOD">🇯🇴 الدينار الأردني (JOD)</option>
+                        <option value="EGP">🇪🇬 الجنيه المصري (EGP)</option>
+                    </select>
+                </div>
+
+                <!-- زر التبديل -->
+                <button class="swap-btn" onclick="swapCurrencies()" title="تبديل العملات">⇄</button>
+
+                <!-- إلى -->
+                <div class="converter-box">
+                    <div class="converter-label">إلى</div>
+                    <input type="number" class="converter-input" id="toAmount" readonly>
+                    <select class="currency-select" id="toCurrency">
+                        <option value="SYP">🇸🇾 الليرة السورية (SYP)</option>
+                        <option value="USD">🇺🇸 الدولار الأمريكي (USD)</option>
+                        <option value="EUR">🇪🇺 اليورو (EUR)</option>
+                        <option value="GBP">🇬🇧 الجنيه الإسترليني (GBP)</option>
+                        <option value="SAR">🇸🇦 الريال السعودي (SAR)</option>
+                        <option value="AED">🇦🇪 الدرهم الإماراتي (AED)</option>
+                        <option value="TRY">🇹🇷 الليرة التركية (TRY)</option>
+                        <option value="IQD">🇮🇶 الدينار العراقي (IQD)</option>
+                        <option value="JOD">🇯🇴 الدينار الأردني (JOD)</option>
+                        <option value="EGP">🇪🇬 الجنيه المصري (EGP)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- مبالغ سريعة -->
+            <div class="quick-amounts">
+                <button class="quick-amount" onclick="setAmount(1)">1</button>
+                <button class="quick-amount" onclick="setAmount(10)">10</button>
+                <button class="quick-amount" onclick="setAmount(50)">50</button>
+                <button class="quick-amount" onclick="setAmount(100)">100</button>
+                <button class="quick-amount" onclick="setAmount(500)">500</button>
+                <button class="quick-amount" onclick="setAmount(1000)">1,000</button>
+                <button class="quick-amount" onclick="setAmount(5000)">5,000</button>
+                <button class="quick-amount" onclick="setAmount(10000)">10,000</button>
+            </div>
+
+            <!-- نتيجة التحويل -->
+            <div class="result-display" id="conversionResult">
+                جاهز للتحويل...
+            </div>
+        </section>
+
+        <!-- معلومات التحديث -->
+        <div class="update-info">
+            <span class="update-dot"></span>
+            آخر تحديث: <span id="lastUpdate">جاري التحميل...</span>
+            <br>
+            <button class="refresh-btn" onclick="refreshAllData()">🔄 تحديث جميع الأسعار</button>
+        </div>
+    </div>
+
+    <!-- تذييل الصفحة -->
+    <footer>
+        <p>⚠️ تنبيه: الأسعار تقريبية وقد تختلف عن الأسعار الفعلية. يرجى التحقق من مصادر موثوقة.</p>
+        <p>© 2024 تطبيق الأسواق السورية - جميع الحقوق محفوظة</p>
+    </footer>
+
+    <!-- ملفات JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

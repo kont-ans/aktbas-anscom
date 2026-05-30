@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أسعار النفط والسلع - الأسواق السورية ⛽</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="nav-brand">💰 الأسواق السورية</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">💱 العملات والذهب</a>
+            <a href="commodities.html" class="nav-link active">⛽ النفط والسلع</a>
+            <a href="stocks.html" class="nav-link">📈 الأسهم والتكنولوجيا</a>
+        </div>
+    </nav>
+
+    <!-- شريط الأخبار -->
+    <div class="ticker-container">
+        <div class="ticker-wrap" id="tickerContent">
+            <!-- يتم ملؤه ديناميكياً -->
+        </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-container">
+        <header class="app-header">
+            <h1>⛽ أسعار النفط والغاز والسلع</h1>
+            <p>متابعة لحظية لأسعار الطاقة والمواد الغذائية في الأسواق العالمية والمحلية</p>
+        </header>
+
+        <!-- بطاقات السلع -->
+        <div class="commodities-grid">
+            <!-- النفط الخام -->
+            <div class="commodity-card oil">
+                <div class="commodity-header">
+                    <span class="commodity-icon">🛢️</span>
+                    <div>
+                        <h3>النفط الخام (برنت)</h3>
+                        <span class="commodity-unit">برميل</span>
+                    </div>
+                </div>
+                <div class="commodity-price" id="oilPrice">--</div>
+                <span class="trend-indicator" id="oilTrend">--</span>
+                <div class="price-details">
+                    <div class="price-detail">
+                        <span class="price-detail-label">التغير</span>
+                        <span class="price-detail-value" id="oilChange">--</span>
+                    </div>
+                    <div class="price-detail">
+                        <span class="price-detail-label">نسبة التغير</span>
+                        <span class="price-detail-value" id="oilChangePercent">--</span>
+                    </div>
+                </div>
+                <div class="mini-chart" id="oilChart"></div>
+            </div>
+
+            <!-- الغاز الطبيعي -->
+            <div class="commodity-card gas">
+                <div class="commodity-header">
+                    <span class="commodity-icon">🔥</span>
+                    <div>
+                        <h3>الغاز الطبيعي</h3>
+                        <span class="commodity-unit">MMBtu</span>
+                    </div>
+                </div>
+                <div class="commodity-price" id="gasPrice">--</div>
+                <span class="trend-indicator" id="gasTrend">--</span>
+                <div class="price-details">
+                    <div class="price-detail">
+                        <span class="price-detail-label">التغير</span>
+                        <span class="price-detail-value" id="gasChange">--</span>
+                    </div>
+                    <div class="price-detail">
+                        <span class="price-detail-label">نسبة التغير</span>
+                        <span class="price-detail-value" id="gasChangePercent">--</span>
+                    </div>
+                </div>
+                <div class="mini-chart" id="gasChart"></div>
+            </div>
+
+            <!-- المازوت -->
+            <div class="commodity-card diesel">
+                <div class="commodity-header">
+                    <span class="commodity-icon">⛽</span>
+                    <div>
+                        <h3>المازوت (الديزل)</h3>
+                        <span class="commodity-unit">لتر</span>
+                    </div>
+                </div>
+                <div class="commodity-price" id="dieselPrice">--</div>
+                <span class="trend-indicator" id="dieselTrend">--</span>
+                <div class="price-details">
+                    <div class="price-detail">
+                        <span class="price-detail-label">السعر المحلي</span>
+                        <span class="price-detail-value" id="dieselLocal">--</span>
+                    </div>
+                    <div class="price-detail">
+                        <span class="price-detail-label">السعر العالمي</span>
+                        <span class="price-detail-value" id="dieselGlobal">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- القمح -->
+            <div class="commodity-card wheat">
+                <div class="commodity-header">
+                    <span class="commodity-icon">🌾</span>
+                    <div>
+                        <h3>القمح (الحنطة)</h3>
+                        <span class="commodity-unit">طن متري</span>
+                    </div>
+                </div>
+                <div class="commodity-price" id="wheatPrice">--</div>
+                <span class="trend-indicator" id="wheatTrend">--</span>
+                <div class="price-details">
+                    <div class="price-detail">
+                        <span class="price-detail-label">سعر الطن</span>
+                        <span class="price-detail-value" id="wheatTon">--</span>
+                    </div>
+                    <div class="price-detail">
+                        <span class="price-detail-label">سعر الكيلو</span>
+                        <span class="price-detail-value" id="wheatKg">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الشعير -->
+            <div class="commodity-card barley">
+                <div class="commodity-header">
+                    <span class="commodity-icon">🌿</span>
+                    <div>
+                        <h3>الشعير</h3>
+                        <span class="commodity-unit">طن متري</span>
+                    </div>
+                </div>
+                <div class="commodity-price" id="barleyPrice">--</div>
+                <span class="trend-indicator" id="barleyTrend">--</span>
+                <div class="price-details">
+                    <div class="price-detail">
+                        <span class="price-detail-label">سعر الطن</span>
+                        <span class="price-detail-value" id="barleyTon">--</span>
+                    </div>
+                    <div class="price-detail">
+                        <span class="price-detail-label">سعر الكيلو</span>
+                        <span class="price-detail-value" id="barleyKg">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول ملخص الأسعار -->
+        <div class="price-table">
+            <h2>📊 ملخص أسعار السلع</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>السلعة</th>
+                            <th>السعر الحالي</th>
+                            <th>التغير</th>
+                            <th>نسبة التغير</th>
+                            <th>آخر تحديث</th>
+                        </tr>
+                    </thead>
+                    <tbody id="priceTableBody">
+                        <!-- يتم ملؤه ديناميكياً -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- أخبار السلع -->
+        <div class="news-section">
+            <h2>📰 آخر أخبار السلع والأسواق</h2>
+            <div id="commodityNews">
+                <div class="news-item">
+                    <h4>🛢️ أسعار النفط ترتفع وسط توترات جيوسياسية</h4>
+                    <p>شهدت أسعار النفط ارتفاعاً ملحوظاً في التعاملات الأخيرة بسبب المخاوف من نقص الإمدادات العالمية...</p>
+                    <span class="news-time">قبل 30 دقيقة</span>
+                </div>
+                <div class="news-item">
+                    <h4>🌾 محصول القمح العالمي يسجل أرقاماً قياسية</h4>
+                    <p>توقعات بزيادة إنتاج القمح العالمي بنسبة 5% هذا الموسم مما قد يؤدي إلى انخفاض الأسعار...</p>
+                    <span class="news-time">قبل ساعة</span>
+                </div>
+                <div class="news-item">
+                    <h4>⛽ استقرار أسعار المازوت في الأسواق المحلية</h4>
+                    <p>حافظت أسعار المازوت على استقرارها مع توفر كميات كافية لتلبية الطلب المحلي...</p>
+                    <span class="news-time">قبل ساعتين</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات التحديث -->
+        <div class="update-info">
+            <span class="update-dot"></span>
+            آخر تحديث: <span id="lastUpdate">جاري التحميل...</span>
+            <br>
+            <button class="refresh-btn" onclick="refreshCommodities()">🔄 تحديث الأسعار</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>⚠️ الأسعار تقريبية وقد تختلف عن الأسعار الفعلية في الأسواق المحلية</p>
+        <p>© 2024 تطبيق الأسواق السورية - جميع الحقوق محفوظة</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/commodities.js"></script>
+</body>
+</html>
