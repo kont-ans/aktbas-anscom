@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 DeepSeek AI - محادثة ذكية</title>
+    <style>
+        /* ── المتغيرات العامة ── */
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #14141e;
+            --bg-card: #1a1a2e;
+            --bg-input: #1e1e32;
+            --bg-user: #2d2d5e;
+            --bg-ai: #1a1a3e;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0c0;
+            --text-user: #ffffff;
+            --border-color: #2a2a4a;
+            --accent: #6c5ce7;
+            --accent-hover: #7d6ff0;
+            --accent-glow: rgba(108, 92, 231, 0.3);
+            --green: #00d4aa;
+            --red: #ff6b6b;
+            --radius: 16px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── إعادة تعيين ── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(ellipse at 10% 20%, rgba(108, 92, 231, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(0, 212, 170, 0.05) 0%, transparent 50%);
+        }
+
+        /* ── الحاوية الرئيسية ── */
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 800px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── الهيدر ── */
+        .chat-header {
+            padding: 18px 24px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .chat-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header .brand .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), var(--green));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .chat-header .brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-header .brand span {
+            font-size: 12px;
+            color: var(--text-secondary);
+            -webkit-text-fill-color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-dot.offline {
+            background: var(--red);
+            animation: none;
+        }
+
+        .btn-icon {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-icon:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* ── منطقة المحادثة ── */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        /* ── الرسائل ── */
+        .message {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            animation: slideIn 0.4s ease-out;
+            line-height: 1.6;
+            font-size: 15px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--bg-user);
+            border-bottom-right-radius: 4px;
+            color: var(--text-user);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: var(--bg-ai);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message .msg-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            display: block;
+            opacity: 0.6;
+        }
+
+        .message .msg-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-left: 8px;
+            background: var(--accent);
+        }
+
+        .message.ai .msg-avatar {
+            background: linear-gradient(135deg, var(--accent), var(--green));
+        }
+
+        .message .msg-content {
+            display: inline;
+        }
+
+        /* ── رسالة الكتابة ── */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 12px 20px;
+            background: var(--bg-ai);
+            border-radius: var(--radius);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border-color);
+            gap: 6px;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: typingBounce 1.4s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        /* ── منطقة الإدخال ── */
+        .chat-input-area {
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: var(--transition);
+            min-height: 48px;
+            max-height: 150px;
+            line-height: 1.5;
+        }
+
+        .chat-input-area textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .chat-input-area textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .chat-input-area .btn-send {
+            background: linear-gradient(135deg, var(--accent), var(--green));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 48px;
+            white-space: nowrap;
+        }
+
+        .chat-input-area .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .chat-input-area .btn-send:active {
+            transform: scale(0.95);
+        }
+
+        .chat-input-area .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── رسالة الترحيب ── */
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .welcome-message .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-message h2 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .welcome-message p {
+            font-size: 14px;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* ── الإعدادات ── */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-modal.open {
+            display: flex;
+        }
+
+        .settings-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 30px;
+            max-width: 460px;
+            width: 90%;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-panel h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-panel .form-group {
+            margin-bottom: 16px;
+        }
+
+        .settings-panel label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .settings-panel input,
+        .settings-panel select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .settings-panel input:focus,
+        .settings-panel select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .settings-panel .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .settings-panel .btn-group button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-save {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-close {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+        }
+
+        .btn-close:hover {
+            background: var(--border-color);
+        }
+
+        /* ── زر مسح المحادثة ── */
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+
+        .clear-btn:hover {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+
+        /* ── التوافق مع الشاشات الصغيرة ── */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            
+            .chat-container {
+                height: 95vh;
+                max-height: none;
+                border-radius: 12px;
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+            }
+
+            .chat-header .brand h1 {
+                font-size: 16px;
+            }
+
+            .chat-messages {
+                padding: 12px 14px;
+            }
+
+            .message {
+                max-width: 92%;
+                font-size: 14px;
+                padding: 12px 14px;
+            }
+
+            .chat-input-area {
+                padding: 10px 14px;
+                gap: 8px;
+            }
+
+            .chat-input-area .btn-send {
+                padding: 10px 16px;
+                font-size: 14px;
+                min-height: 40px;
+            }
+
+            .chat-input-area textarea {
+                padding: 10px 12px;
+                font-size: 13px;
+                min-height: 40px;
+            }
+
+            .settings-panel {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .chat-header .brand .logo {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+
+            .header-actions .btn-icon {
+                padding: 4px 8px;
+                font-size: 14px;
+            }
+
+            .chat-input-area .btn-send span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── حاوية المحادثة ── -->
+    <div class="chat-container">
+
+        <!-- الهيدر -->
+        <div class="chat-header">
+            <div class="brand">
+                <div class="logo">🧠</div>
+                <div>
+                    <h1>DeepSeek AI</h1>
+                    <span>ذكاء اصطناعي متقدم</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="status-dot" id="statusDot"></span>
+                <button class="btn-icon" onclick="clearChat()" title="مسح المحادثة">
+                    🗑️
+                </button>
+                <button class="btn-icon" onclick="openSettings()" title="الإعدادات">
+                    ⚙️
+                </button>
+            </div>
+        </div>
+
+        <!-- منطقة المحادثة -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message" id="welcomeMessage">
+                <div class="icon">👋</div>
+                <h2>مرحباً بك في DeepSeek</h2>
+                <p>
+                    أنا مساعد ذكي يعمل بتقنية DeepSeek.<br>
+                    اسألني أي شيء وسأبذل قصارى جهدي لمساعدتك! 🚀
+                </p>
+            </div>
+        </div>
+
+        <!-- مؤشر الكتابة -->
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span style="color: var(--text-secondary); font-size: 13px; margin-right: 8px;">يكتب...</span>
+        </div>
+
+        <!-- منطقة الإدخال -->
+        <div class="chat-input-area">
+            <textarea 
+                id="messageInput" 
+                placeholder="اكتب رسالتك هنا..." 
+                rows="1"
+                onkeydown="handleKeyDown(event)"
+            ></textarea>
+            <button class="btn-send" id="sendBtn" onclick="sendMessage()">
+                <span>إرسال</span>
+                <span>➤</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── نافذة الإعدادات ── -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-panel">
+            <h2>⚙️ الإعدادات</h2>
+            
+            <div class="form-group">
+                <label>🔑 مفتاح API</label>
+                <input type="text" id="apiKeyInput" placeholder="أدخل مفتاح API الخاص بك">
+            </div>
+
+            <div class="form-group">
+                <label>🧠 النموذج</label>
+                <select id="modelSelect">
+                    <option value="deepseek-chat">DeepSeek Chat</option>
+                    <option value="deepseek-coder">DeepSeek Coder</option>
+                    <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>🌡️ درجة الإبداع (Temperature)</label>
+                <input type="range" id="tempRange" min="0" max="2" step="0.1" value="0.7">
+                <span id="tempValue" style="color: var(--text-secondary); font-size: 13px;">0.7</span>
+            </div>
+
+            <div class="form-group">
+                <label>📝 الحد الأقصى للرد (Tokens)</label>
+                <select id="maxTokens">
+                    <option value="1024">قصير (1024)</option>
+                    <option value="2048" selected>متوسط (2048)</option>
+                    <option value="4096">طويل (4096)</option>
+                    <option value="8192">طويل جداً (8192)</option>
+                </select>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-save" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+                <button class="btn-close" onclick="closeSettings()">❌ إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── الإعدادات ────────────────────────────────────────────────
+        let config = {
+            apiKey: 'sk-ba7574d04f814689a89d76aa55f80153',
+            model: 'deepseek-chat',
+            temperature: 0.7,
+            maxTokens: 2048,
+            apiUrl: 'https://api.deepseek.com/chat/completions'
+        };
+
+        let isProcessing = false;
+        let messageHistory = [];
+
+        // ── تحميل الإعدادات المحفوظة ────────────────────────────────
+        function loadSettings() {
+            const saved = localStorage.getItem('deepseek_config');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    config = { ...config, ...parsed };
+                } catch (e) {}
+            }
+            
+            // تحديث الواجهة
+            document.getElementById('apiKeyInput').value = config.apiKey;
+            document.getElementById('modelSelect').value = config.model;
+            document.getElementById('tempRange').value = config.temperature;
+            document.getElementById('tempValue').textContent = config.temperature;
+            document.getElementById('maxTokens').value = config.maxTokens;
+
+            // تحديث حالة البوت
+            updateStatus(config.apiKey ? true : false);
+        }
+
+        // ── حفظ الإعدادات ────────────────────────────────────────────
+        function saveSettings() {
+            config.apiKey = document.getElementById('apiKeyInput').value.trim();
+            config.model = document.getElementById('modelSelect').value;
+            config.temperature = parseFloat(document.getElementById('tempRange').value);
+            config.maxTokens = parseInt(document.getElementById('maxTokens').value);
+
+            localStorage.setItem('deepseek_config', JSON.stringify(config));
+            updateStatus(!!config.apiKey);
+            closeSettings();
+            showNotification('✅ تم حفظ الإعدادات بنجاح!');
+        }
+
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('open');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        // ── تحديث حالة البوت ──────────────────────────────────────────
+        function updateStatus(isOnline) {
+            const dot = document.getElementById('statusDot');
+            dot.className = 'status-dot' + (isOnline ? '' : ' offline');
+        }
+
+        // ── إشعارات ──────────────────────────────────────────────────
+        function showNotification(text) {
+            const existing = document.querySelector('.custom-notification');
+            if (existing) existing.remove();
+
+            const notif = document.createElement('div');
+            notif.className = 'custom-notification';
+            notif.textContent = text;
+            Object.assign(notif.style, {
+                position: 'fixed',
+                bottom: '20px',
+                right: '20px',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                padding: '12px 20px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                boxShadow: 'var(--shadow)',
+                zIndex: '2000',
+                animation: 'slideIn 0.4s ease-out',
+                fontSize: '14px',
+                maxWidth: '300px'
+            });
+
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        // ── إضافة رسالة إلى الواجهة ──────────────────────────────────
+        function addMessage(content, isUser = false, time = null) {
+            const container = document.getElementById('chatMessages');
+            const welcome = document.getElementById('welcomeMessage');
+            
+            // إخفاء رسالة الترحيب
+            if (welcome) welcome.style.display = 'none';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+
+            const timeStr = time || new Date().toLocaleTimeString('ar-SA', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            // معالجة النص (تحويل الروابط)
+            const formattedContent = content.replace(
+                /(https?:\/\/[^\s]+)/g, 
+                '<a href="$1" target="_blank" style="color: var(--accent);">$1</a>'
+            );
+
+            msgDiv.innerHTML = `
+                ${!isUser ? `<span class="msg-avatar">🧠</span>` : ''}
+                <span class="msg-content">${formattedContent}</span>
+                <span class="msg-time">${timeStr}</span>
+            `;
+
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+
+            // حفظ في التاريخ
+            messageHistory.push({ role: isUser ? 'user' : 'assistant', content });
+        }
+
+        // ── عرض مؤشر الكتابة ─────────────────────────────────────────
+        function showTyping(show) {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.toggle('active', show);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        // ── إرسال رسالة ──────────────────────────────────────────────
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const btn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+
+            if (!message || isProcessing) return;
+
+            // التحقق من وجود مفتاح API
+            if (!config.apiKey) {
+                showNotification('⚠️ يرجى إدخال مفتاح API في الإعدادات');
+                openSettings();
+                return;
+            }
+
+            // تعطيل الإدخال
+            isProcessing = true;
+            input.disabled = true;
+            btn.disabled = true;
+            input.value = '';
+
+            // إضافة رسالة المستخدم
+            addMessage(message, true);
+
+            // إظهار مؤشر الكتابة
+            showTyping(true);
+
+            try {
+                const response = await callDeepSeek(message);
+                showTyping(false);
+                addMessage(response, false);
+            } catch (error) {
+                showTyping(false);
+                const errorMsg = error.message || 'حدث خطأ غير متوقع';
+                addMessage(`❌ ${errorMsg}`, false);
+                console.error('DeepSeek Error:', error);
+            }
+
+            // إعادة تفعيل الإدخال
+            isProcessing = false;
+            input.disabled = false;
+            btn.disabled = false;
+            input.focus();
+        }
+
+        // ── استدعاء DeepSeek API ─────────────────────────────────────
+        async function callDeepSeek(message) {
+            const messages = [
+                { role: 'system', content: 'أنت مساعد ذكي ومفيد. تحدث باللغة العربية دائماً.' },
+                ...messageHistory.slice(-10).map(m => ({ 
+                    role: m.role, 
+                    content: m.content 
+                })),
+                { role: 'user', content: message }
+            ];
+
+            const response = await fetch(config.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${config.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: config.model,
+                    messages: messages,
+                    temperature: config.temperature,
+                    max_tokens: config.maxTokens,
+                    stream: false
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                let errorMsg = `خطأ ${response.status}`;
+                
+                if (response.status === 401) {
+                    errorMsg = '❌ مفتاح API غير صحيح. يرجى التحقق من المفتاح في الإعدادات.';
+                } else if (response.status === 429) {
+                    errorMsg = '⚠️ تجاوزت حد الاستخدام. يرجى المحاولة لاحقاً.';
+                } else if (response.status === 500) {
+                    errorMsg = '⚠️ خطأ في الخادم. يرجى المحاولة مرة أخرى.';
+                } else if (errorData.error) {
+                    errorMsg = errorData.error.message || errorData.error;
+                }
+
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // ── معالجة ضغط Enter ─────────────────────────────────────────
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // ── تعديل ارتفاع الحقل تلقائياً ─────────────────────────────
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // ── مسح المحادثة ─────────────────────────────────────────────
+        function clearChat() {
+            if (messageHistory.length === 0) return;
+            
+            if (confirm('هل أنت متأكد من مسح جميع الرسائل؟')) {
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = `
+                    <div class="welcome-message" id="welcomeMessage">
+                        <div class="icon">🔄</div>
+                        <h2>تم مسح المحادثة</h2>
+                        <p>ابدأ محادثة جديدة مع DeepSeek AI 🚀</p>
+                    </div>
+                `;
+                messageHistory = [];
+            }
+        }
+
+        // ── تحديث قيمة Temperature ───────────────────────────────────
+        document.getElementById('tempRange').addEventListener('input', function() {
+            document.getElementById('tempValue').textContent = this.value;
+        });
+
+        // ── بدء التطبيق ──────────────────────────────────────────────
+        loadSettings();
+
+        // ── التركيز على حقل الإدخال ──────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('messageInput').focus();
+        });
+
+        // ── إغلاق الإعدادات عند الضغط على ESC ──────────────────────
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSettings();
+        });
+
+        // ── إغلاق الإعدادات عند النقر خارجها ───────────────────────
+        document.getElementById('settingsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSettings();
+        });
+
+        console.log('🧠 DeepSeek AI Chat Loaded Successfully!');
+        console.log('📌 Channel: t.me/Tools_Watan');
+        console.log('👤 Developer: @DDDBB4');
+    </script>
+</body>
+</html>
