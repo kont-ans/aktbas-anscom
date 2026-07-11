@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة إدارة بوت الأرقام v3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --border:#30363d;--text:#e6edf3;--text2:#8b949e;
+  --blue:#58a6ff;--green:#3fb950;--red:#f85149;
+  --yellow:#d29922;--purple:#bc8cff;--orange:#f0883e;
+  --radius:8px;--shadow:0 4px 20px rgba(0,0,0,.4);
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+
+/* Header */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-title{display:flex;align-items:center;gap:12px;font-size:1.1rem;font-weight:700}
+.header-title .badge{background:linear-gradient(135deg,var(--blue),var(--purple));padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600}
+.header-right{display:flex;align-items:center;gap:14px}
+.bot-status{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text2)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot.off{background:var(--red)}
+.login-btn{background:var(--blue);color:#000;border:none;padding:7px 18px;border-radius:var(--radius);cursor:pointer;font-weight:600;font-size:.85rem}
+
+/* Layout */
+.layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);padding:16px 0;flex-shrink:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+.sidebar-item{padding:10px 20px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:.9rem;color:var(--text2);border-right:3px solid transparent;transition:.2s}
+.sidebar-item:hover,.sidebar-item.active{color:var(--text);background:var(--bg3);border-right-color:var(--blue)}
+.sidebar-item .icon{font-size:1.1rem;width:22px;text-align:center}
+.main{flex:1;padding:24px;overflow-y:auto}
+
+/* Cards */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:.2s}
+.card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.card-label{font-size:.78rem;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card-value{font-size:1.6rem;font-weight:700;line-height:1}
+.card-sub{font-size:.75rem;color:var(--text2);margin-top:4px}
+.card.green .card-value{color:var(--green)}
+.card.blue .card-value{color:var(--blue)}
+.card.red .card-value{color:var(--red)}
+.card.yellow .card-value{color:var(--yellow)}
+.card.purple .card-value{color:var(--purple)}
+
+/* Controls */
+.section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+.section-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.controls-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.control-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;align-items:center;justify-content:space-between;transition:.2s}
+.control-card.enabled{border-color:rgba(63,185,80,.3)}
+.control-card.disabled{border-color:rgba(248,81,73,.3)}
+.control-info .title{font-size:.9rem;font-weight:600;margin-bottom:4px}
+.control-info .desc{font-size:.75rem;color:var(--text2)}
+
+/* Toggle */
+.toggle{position:relative;width:46px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#444;border-radius:26px;cursor:pointer;transition:.3s}
+.slider:before{content:'';position:absolute;width:20px;height:20px;right:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked + .slider{background:var(--green)}
+input:checked + .slider:before{transform:translateX(-20px)}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:var(--bg3);color:var(--text2);font-weight:600;padding:10px 14px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge-status{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.bs-pending{background:rgba(210,153,34,.15);color:var(--yellow)}
+.bs-approved,.bs-active{background:rgba(63,185,80,.15);color:var(--green)}
+.bs-rejected{background:rgba(248,81,73,.15);color:var(--red)}
+.bs-banned{background:rgba(248,81,73,.15);color:var(--red)}
+.bs-ok{background:rgba(63,185,80,.15);color:var(--green)}
+
+/* Buttons */
+.btn{border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;transition:.2s;white-space:nowrap}
+.btn:hover{opacity:.85}
+.btn-green{background:rgba(63,185,80,.2);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.btn-red{background:rgba(248,81,73,.2);color:var(--red);border:1px solid rgba(248,81,73,.3)}
+.btn-blue{background:rgba(88,166,255,.2);color:var(--blue);border:1px solid rgba(88,166,255,.3)}
+.btn-sm{padding:4px 10px;font-size:.75rem}
+.btn-disabled{opacity:.4;cursor:not-allowed}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;gap:8px;margin-top:14px;justify-content:center}
+.page-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.82rem;transition:.2s}
+.page-btn:hover,.page-btn.active{background:var(--blue);border-color:var(--blue);color:#000}
+.page-info{color:var(--text2);font-size:.82rem}
+
+/* Search & Filter */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:var(--radius);font-size:.85rem;flex:1;min-width:200px;outline:none;transition:.2s}
+.search-input:focus{border-color:var(--blue)}
+.filter-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:var(--radius);cursor:pointer;font-size:.82rem;transition:.2s}
+.filter-btn.active,.filter-btn:hover{background:var(--blue);border-color:var(--blue);color:#000}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:440px;box-shadow:var(--shadow)}
+.modal h3{margin-bottom:16px;font-size:1rem}
+.modal-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:var(--radius);font-size:.9rem;outline:none;margin-bottom:14px}
+.modal-input:focus{border-color:var(--blue)}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end}
+
+/* Login */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px 28px;width:90%;max-width:380px;text-align:center;box-shadow:var(--shadow)}
+.login-box h2{margin-bottom:4px;font-size:1.3rem}
+.login-box .sub{color:var(--text2);font-size:.82rem;margin-bottom:20px}
+.login-err{color:var(--red);font-size:.8rem;margin-top:8px;display:none}
+.login-tabs{display:flex;gap:0;margin-bottom:22px;background:var(--bg3);border-radius:8px;padding:3px}
+.login-tab{flex:1;padding:8px;border-radius:6px;cursor:pointer;font-size:.82rem;color:var(--text2);border:none;background:transparent;transition:.2s;font-family:inherit}
+.login-tab.active{background:var(--bg2);color:var(--text);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.otp-sent-info{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.25);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--green);margin-bottom:12px;display:none}
+.countdown{font-size:.75rem;color:var(--text2);margin-top:6px}
+.otp-digits{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.otp-digit{width:44px;height:52px;background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:1.4rem;font-weight:700;text-align:center;outline:none;transition:.2s;caret-color:var(--blue)}
+.otp-digit:focus{border-color:var(--blue);background:rgba(88,166,255,.06)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab{padding:8px 16px;cursor:pointer;font-size:.85rem;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s}
+.tab.active,.tab:hover{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* Empty */
+.empty{text-align:center;padding:36px;color:var(--text2);font-size:.9rem}
+.empty .icon{font-size:2.5rem;margin-bottom:10px}
+
+/* Loading */
+.loading{display:flex;justify-content:center;padding:40px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* User detail */
+.user-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.detail-row{background:var(--bg3);border-radius:6px;padding:10px 14px}
+.detail-label{font-size:.72rem;color:var(--text2);margin-bottom:3px}
+.detail-value{font-size:.9rem;font-weight:600}
+
+/* Notification */
+.notif{position:fixed;top:70px;left:24px;z-index:600;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;font-size:.85rem;box-shadow:var(--shadow);transform:translateX(-120%);transition:.3s;max-width:300px}
+.notif.show{transform:translateX(0)}
+.notif.success{border-color:var(--green);color:var(--green)}
+.notif.error{border-color:var(--red);color:var(--red)}
+
+@media(max-width:700px){
+  .sidebar{display:none}
+  .cards-grid{grid-template-columns:1fr 1fr}
+  .controls-grid{grid-template-columns:1fr}
+  .user-detail-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:2.2rem;margin-bottom:10px">🤖</div>
+    <h2>لوحة إدارة البوت</h2>
+    <div class="sub">بوت الأرقام المؤقتة — v3</div>
+
+    <!-- Tabs -->
+    <div class="login-tabs">
+      <button class="login-tab active" id="tab-otp"   onclick="switchLoginTab('otp')">📱 كود تيليجرام</button>
+      <button class="login-tab"        id="tab-token" onclick="switchLoginTab('token')">🔑 رمز الوصول</button>
+    </div>
+
+    <!-- OTP Panel -->
+    <div id="panel-otp">
+      <div class="otp-sent-info" id="otp-sent-info">
+        ✅ تم إرسال الكود إلى تيليجرام
+        <div class="countdown" id="otp-countdown"></div>
+      </div>
+      <button class="btn btn-blue" style="width:100%;padding:11px;margin-bottom:14px;font-size:.9rem" id="send-code-btn" onclick="requestLoginCode()">
+        📨 أرسل كود الدخول إلى تيليجرام
+      </button>
+      <div style="font-size:.75rem;color:var(--text2);margin-bottom:10px">أدخل الكود المكوّن من 6 أرقام</div>
+      <div class="otp-digits">
+        <input class="otp-digit" id="d0" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpInput(this,0)" onkeydown="otpKeydown(event,0)">
+        <input class="otp-digit" id="d1" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpInput(this,1)" onkeydown="otpKeydown(event,1)">
+        <input class="otp-digit" id="d2" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpInput(this,2)" onkeydown="otpKeydown(event,2)">
+        <input class="otp-digit" id="d3" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpInput(this,3)" onkeydown="otpKeydown(event,3)">
+        <input class="otp-digit" id="d4" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpInput(this,4)" onkeydown="otpKeydown(event,4)">
+        <input class="otp-digit" id="d5" maxlength="1" inputmode="numeric" pattern="[0-9]" oninput="otpInput(this,5)" onkeydown="otpKeydown(event,5)">
+      </div>
+      <button class="btn btn-green" style="width:100%;padding:11px;font-size:.9rem" onclick="verifyLoginCode()">✅ تأكيد الكود</button>
+      <div class="login-err" id="otp-err"></div>
+    </div>
+
+    <!-- Token Panel -->
+    <div id="panel-token" style="display:none">
+      <input class="modal-input" type="password" id="token-input" placeholder="رمز الوصول المباشر" style="margin-bottom:10px">
+      <button class="btn btn-blue" style="width:100%;padding:11px;font-size:.9rem" onclick="doLogin()">دخول</button>
+      <div class="login-err" id="login-err">❌ رمز الوصول غير صحيح</div>
+    </div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">
+    🤖 لوحة إدارة البوت
+    <span class="badge">v3</span>
+  </div>
+  <div class="header-right">
+    <div class="bot-status">
+      <span class="dot" id="bot-dot"></span>
+      <span id="bot-status-text">جاري التحميل...</span>
+    </div>
+    <button class="btn btn-blue btn-sm" onclick="refreshAll()">🔄 تحديث</button>
+    <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border)" onclick="logout()">خروج</button>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">📊</span> الرئيسية</div>
+    <div class="sidebar-item" onclick="showPage('controls')" id="nav-controls"><span class="icon">⚙️</span> التحكم</div>
+    <div class="sidebar-item" onclick="showPage('users')" id="nav-users"><span class="icon">👥</span> المستخدمون</div>
+    <div class="sidebar-item" onclick="showPage('deposits')" id="nav-deposits"><span class="icon">⬇️</span> الإيداعات</div>
+    <div class="sidebar-item" onclick="showPage('withdrawals')" id="nav-withdrawals"><span class="icon">⬆️</span> السحوبات</div>
+    <div class="sidebar-item" onclick="showPage('orders')" id="nav-orders"><span class="icon">💎</span> طلبات الأرقام</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main-content">
+    <!-- Pages inserted by JS -->
+  </div>
+</div>
+
+<!-- Modal: Reject with reason -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <h3>❌ سبب الرفض</h3>
+    <textarea class="modal-input" id="reject-reason" rows="3" placeholder="اكتب سبب الرفض للمستخدم..."></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-red" onclick="confirmReject()">تأكيد الرفض</button>
+      <button class="btn" style="background:var(--bg3);border:1px solid var(--border)" onclick="closeModal('reject-modal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Set Balance -->
+<div class="modal-overlay" id="balance-modal">
+  <div class="modal">
+    <h3 id="balance-modal-title">💵 تعديل الرصيد</h3>
+    <input class="modal-input" type="number" step="0.01" id="balance-input" placeholder="الرصيد الجديد بالدولار">
+    <div class="modal-btns">
+      <button class="btn btn-green" onclick="confirmBalance()">حفظ</button>
+      <button class="btn" style="background:var(--bg3);border:1px solid var(--border)" onclick="closeModal('balance-modal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let TOKEN = localStorage.getItem("admin_token") || "";
+let currentPage = "dashboard";
+let usersPage = 0, usersFilter = "all", usersSearch = "";
+let rejectTarget = null, rejectType = null;
+let balanceUserId = null;
+
+// ── Login Tabs ─────────────────────────────────────────────────────
+function switchLoginTab(tab) {
+  document.getElementById("panel-otp").style.display   = tab === "otp"   ? "" : "none";
+  document.getElementById("panel-token").style.display = tab === "token" ? "" : "none";
+  document.getElementById("tab-otp").classList.toggle("active",   tab === "otp");
+  document.getElementById("tab-token").classList.toggle("active", tab === "token");
+}
+
+// ── OTP Login ──────────────────────────────────────────────────────
+let _otpExpires = 0, _cdTimer = null;
+
+async function requestLoginCode() {
+  const btn = document.getElementById("send-code-btn");
+  const errEl = document.getElementById("otp-err");
+  errEl.style.display = "none";
+  btn.disabled = true;
+  btn.textContent = "⏳ جاري الإرسال...";
+  try {
+    const r = await fetch("/api/request_login_code", { method: "POST", headers: {"Content-Type":"application/json"} });
+    const d = await r.json();
+    if (r.ok) {
+      _otpExpires = Date.now() + 300000;
+      document.getElementById("otp-sent-info").style.display = "block";
+      startOtpCountdown();
+      document.getElementById("d0").focus();
+      btn.textContent = "📨 إعادة إرسال الكود";
+      // re-enable after 60s
+      setTimeout(() => { btn.disabled = false; }, 60000);
+    } else {
+      errEl.textContent = "❌ " + (d.error || "خطأ");
+      errEl.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "📨 أرسل كود الدخول إلى تيليجرام";
+    }
+  } catch {
+    errEl.textContent = "❌ تعذّر الاتصال بالخادم";
+    errEl.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "📨 أرسل كود الدخول إلى تيليجرام";
+  }
+}
+
+function startOtpCountdown() {
+  clearInterval(_cdTimer);
+  const el = document.getElementById("otp-countdown");
+  _cdTimer = setInterval(() => {
+    const rem = Math.max(0, Math.round((_otpExpires - Date.now()) / 1000));
+    const m = Math.floor(rem / 60), s = rem % 60;
+    el.textContent = `⏰ ينتهي خلال ${m}:${String(s).padStart(2,"0")}`;
+    if (rem <= 0) {
+      clearInterval(_cdTimer);
+      el.textContent = "⌛ انتهت صلاحية الكود — اطلب كوداً جديداً";
+    }
+  }, 1000);
+}
+
+// OTP digit helpers — انتقال تلقائي بين الخانات
+function otpInput(el, idx) {
+  el.value = el.value.replace(/\D/g, "").slice(-1);
+  if (el.value && idx < 5) document.getElementById("d"+(idx+1)).focus();
+  if (idx === 5 && el.value) verifyLoginCode();
+}
+function otpKeydown(e, idx) {
+  if (e.key === "Backspace" && !e.target.value && idx > 0) {
+    document.getElementById("d"+(idx-1)).focus();
+  }
+  if (e.key === "v" && (e.ctrlKey||e.metaKey)) {
+    e.preventDefault();
+    navigator.clipboard.readText().then(txt => {
+      const digits = txt.replace(/\D/g,"").slice(0,6);
+      for (let i=0;i<digits.length;i++) {
+        const d = document.getElementById("d"+i);
+        if (d) d.value = digits[i];
+      }
+      const last = document.getElementById("d"+(digits.length-1));
+      if (last) last.focus();
+      if (digits.length === 6) verifyLoginCode();
+    }).catch(()=>{});
+  }
+}
+
+async function verifyLoginCode() {
+  const code = [0,1,2,3,4,5].map(i => document.getElementById("d"+i).value).join("");
+  const errEl = document.getElementById("otp-err");
+  errEl.style.display = "none";
+  if (code.length < 6) { errEl.textContent = "❌ أدخل الكود المكوّن من 6 أرقام"; errEl.style.display = "block"; return; }
+  try {
+    const r = await fetch("/api/verify_login_code", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({code})
+    });
+    const d = await r.json();
+    if (r.ok && d.token) {
+      TOKEN = d.token;
+      localStorage.setItem("admin_token", TOKEN);
+      clearInterval(_cdTimer);
+      document.getElementById("login-screen").style.display = "none";
+      refreshAll();
+    } else {
+      errEl.textContent = "❌ " + (d.error || "كود غير صحيح");
+      errEl.style.display = "block";
+      [0,1,2,3,4,5].forEach(i => { const d = document.getElementById("d"+i); if(d) d.value=""; });
+      document.getElementById("d0").focus();
+    }
+  } catch {
+    errEl.textContent = "❌ تعذّر الاتصال بالخادم";
+    errEl.style.display = "block";
+  }
+}
+
+// ── Direct Token Auth ──────────────────────────────────────────────
+function doLogin() {
+  const t = document.getElementById("token-input").value.trim();
+  if (!t) return;
+  TOKEN = t;
+  testAuth();
+}
+document.getElementById("token-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
+async function testAuth() {
+  try {
+    const r = await api("/api/stats");
+    if (r.ok) {
+      localStorage.setItem("admin_token", TOKEN);
+      document.getElementById("login-screen").style.display = "none";
+      refreshAll();
+    } else {
+      document.getElementById("login-err").style.display = "block";
+    }
+  } catch {
+    document.getElementById("login-err").style.display = "block";
+  }
+}
+function logout() {
+  localStorage.removeItem("admin_token");
+  TOKEN = "";
+  location.reload();
+}
+if (TOKEN) testAuth();
+
+// ── API ────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const headers = { "X-Admin-Token": TOKEN, "Content-Type": "application/json", ...(opts.headers || {}) };
+  return fetch(path, { ...opts, headers });
+}
+async function apiJson(path, opts = {}) {
+  const r = await api(path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── Notify ─────────────────────────────────────────────────────────
+function notify(msg, type = "success") {
+  const el = document.getElementById("notif");
+  el.textContent = (type === "success" ? "✅ " : "❌ ") + msg;
+  el.className = `notif ${type} show`;
+  setTimeout(() => el.classList.remove("show"), 3000);
+}
+
+// ── Navigation ─────────────────────────────────────────────────────
+function showPage(p) {
+  currentPage = p;
+  document.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
+  const nav = document.getElementById("nav-" + p);
+  if (nav) nav.classList.add("active");
+  render();
+}
+
+// ── Refresh ────────────────────────────────────────────────────────
+let statsData = null, settingsData = null;
+async function refreshAll() {
+  try {
+    [statsData, settingsData] = await Promise.all([
+      apiJson("/api/stats"),
+      apiJson("/api/settings"),
+    ]);
+    updateBotStatus();
+    render();
+  } catch (e) { console.error(e); }
+}
+function updateBotStatus() {
+  const on = settingsData && settingsData.bot_enabled === "1";
+  document.getElementById("bot-dot").className = "dot " + (on ? "on" : "off");
+  document.getElementById("bot-status-text").textContent = on ? "البوت يعمل" : "البوت متوقف";
+}
+setInterval(refreshAll, 30000);
+
+// ── Render router ──────────────────────────────────────────────────
+function render() {
+  const el = document.getElementById("main-content");
+  if (!statsData) { el.innerHTML = `<div class="loading"><div class="spinner"></div></div>`; return; }
+  if (currentPage === "dashboard")   renderDashboard(el);
+  else if (currentPage === "controls")   renderControls(el);
+  else if (currentPage === "users")      renderUsers(el);
+  else if (currentPage === "deposits")   renderDeposits(el);
+  else if (currentPage === "withdrawals") renderWithdrawals(el);
+  else if (currentPage === "orders")     renderOrders(el);
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────
+function renderDashboard(el) {
+  const s = statsData;
+  const pend = s.pending_deposits + s.pending_withdrawals + s.pending_orders;
+  el.innerHTML = `
+    <h2 style="margin-bottom:18px;font-size:1.1rem">📊 نظرة عامة</h2>
+    <div class="cards-grid">
+      <div class="card blue"><div class="card-label">👥 إجمالي المستخدمين</div><div class="card-value">${s.total_users.toLocaleString()}</div><div class="card-sub">اليوم +${s.today_users}</div></div>
+      <div class="card red"><div class="card-label">🚫 المحظورون</div><div class="card-value">${s.banned_users}</div></div>
+      <div class="card green"><div class="card-label">🟢 جلسات نشطة</div><div class="card-value">${s.active_sessions}</div><div class="card-sub">إجمالي ${s.total_sessions}</div></div>
+      <div class="card purple"><div class="card-label">💰 إجمالي الأرصدة</div><div class="card-value">${s.total_balance.toFixed(2)}$</div></div>
+      <div class="card yellow"><div class="card-label">⏳ طلبات معلقة</div><div class="card-value">${pend}</div><div class="card-sub">إيداع:${s.pending_deposits} سحب:${s.pending_withdrawals} أرقام:${s.pending_orders}</div></div>
+      <div class="card"><div class="card-label">📅 جلسات اليوم</div><div class="card-value">${s.today_sessions}</div></div>
+    </div>
+
+    ${settingsData ? `
+    <div class="section">
+      <div class="section-title">🔧 حالة الأنظمة</div>
+      <div class="controls-grid">
+        ${controlCard("bot_enabled","🤖 حالة البوت","وضع الصيانة / تشغيل البوت")}
+        ${controlCard("deposit_enabled","⬇️ نظام الإيداع","السماح للمستخدمين بالإيداع")}
+        ${controlCard("paid_numbers_enabled","💎 الأرقام المدفوعة","السماح بشراء أرقام مدفوعة")}
+      </div>
+    </div>` : ""}
+
+    ${s.top_countries && s.top_countries.length ? `
+    <div class="section">
+      <div class="section-title">🌍 أكثر الدول طلباً</div>
+      <table><thead><tr><th>#</th><th>الدولة</th><th>الجلسات</th></tr></thead><tbody>
+        ${s.top_countries.map((c,i)=>`<tr><td>${i+1}</td><td>${c.country}</td><td>${c.count}</td></tr>`).join("")}
+      </tbody></table>
+    </div>` : ""}
+  `;
+  attachToggles();
+}
+
+// ── Controls ───────────────────────────────────────────────────────
+function controlCard(key, title, desc) {
+  if (!settingsData) return "";
+  const on = settingsData[key] === "1";
+  return `<div class="control-card ${on?"enabled":"disabled"}" id="card-${key}">
+    <div class="control-info">
+      <div class="title">${title}</div>
+      <div class="desc">${desc}</div>
+      <div style="margin-top:6px;font-size:.72rem;color:${on?"var(--green)":"var(--red)"}">
+        ${on?"● مفعّل":"● معطّل"}
+      </div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" ${on?"checked":""} onchange="toggleSetting('${key}',this.checked)" id="toggle-${key}">
+      <span class="slider"></span>
+    </label>
+  </div>`;
+}
+
+function renderControls(el) {
+  el.innerHTML = `
+    <h2 style="margin-bottom:18px;font-size:1.1rem">⚙️ التحكم بالأنظمة</h2>
+    <div class="section">
+      <div class="section-title">🔧 مفاتيح التحكم الرئيسية</div>
+      <div style="background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:.83rem;color:var(--yellow)">
+        ⚠️ تؤثر هذه الإعدادات فورياً على البوت. إيقاف البوت سيعرض رسالة الصيانة لجميع المستخدمين.
+      </div>
+      <div class="controls-grid">
+        ${controlCard("bot_enabled","🤖 تشغيل / إيقاف البوت","عند الإيقاف يرى المستخدمون رسالة الصيانة")}
+        ${controlCard("deposit_enabled","⬇️ نظام الإيداع","السماح للمستخدمين بإيداع الأموال")}
+        ${controlCard("paid_numbers_enabled","💎 الأرقام المدفوعة","السماح بشراء الأرقام المدفوعة")}
+      </div>
+    </div>
+  `;
+  attachToggles();
+}
+
+async function toggleSetting(key, val) {
+  try {
+    const data = {};
+    data[key] = val;
+    await apiJson("/api/settings", { method: "POST", body: JSON.stringify(data) });
+    settingsData = await apiJson("/api/settings");
+    updateBotStatus();
+    notify(`تم ${val?"تفعيل":"إيقاف"} الإعداد بنجاح`);
+    // Update card styling
+    const card = document.getElementById("card-" + key);
+    if (card) {
+      card.className = `control-card ${val?"enabled":"disabled"}`;
+      const status = card.querySelector(".control-info div:last-child");
+      if (status) {
+        status.style.color = val ? "var(--green)" : "var(--red)";
+        status.textContent = val ? "● مفعّل" : "● معطّل";
+      }
+    }
+  } catch (e) {
+    notify("خطأ في تحديث الإعداد", "error");
+    // Revert toggle
+    const tog = document.getElementById("toggle-" + key);
+    if (tog) tog.checked = !val;
+  }
+}
+
+function attachToggles() {
+  // Toggles are already inline onchange handlers
+}
+
+// ── Users ──────────────────────────────────────────────────────────
+let usersData = null;
+async function loadUsers() {
+  const qs = `?page=${usersPage}&filter=${usersFilter}&search=${encodeURIComponent(usersSearch)}`;
+  usersData = await apiJson("/api/users" + qs);
+  renderUsersTable();
+}
+
+function renderUsers(el) {
+  el.innerHTML = `
+    <h2 style="margin-bottom:18px;font-size:1.1rem">👥 إدارة المستخدمين</h2>
+    <div class="toolbar">
+      <input class="search-input" type="text" placeholder="🔍 بحث بالآيدي أو الاسم..." id="user-search" value="${usersSearch}" oninput="debounceSearch()">
+      <button class="filter-btn ${usersFilter==='all'?'active':''}" onclick="setFilter('all')">الكل</button>
+      <button class="filter-btn ${usersFilter==='active'?'active':''}" onclick="setFilter('active')">النشطون</button>
+      <button class="filter-btn ${usersFilter==='banned'?'active':''}" onclick="setFilter('banned')">المحظورون</button>
+    </div>
+    <div class="section" style="padding:0">
+      <div id="users-table-wrap"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div id="users-pagination" class="pagination"></div>
+  `;
+  loadUsers();
+}
+
+let searchTimer;
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  usersSearch = document.getElementById("user-search")?.value || "";
+  usersPage = 0;
+  searchTimer = setTimeout(loadUsers, 400);
+}
+function setFilter(f) {
+  usersFilter = f; usersPage = 0;
+  renderUsers(document.getElementById("main-content"));
+}
+
+function renderUsersTable() {
+  const wrap = document.getElementById("users-table-wrap");
+  if (!wrap || !usersData) return;
+  const { users, total, total_pages, page } = usersData;
+  if (!users.length) {
+    wrap.innerHTML = `<div class="empty"><div class="icon">👤</div>لا يوجد مستخدمون</div>`;
+    document.getElementById("users-pagination").innerHTML = "";
+    return;
+  }
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>الآيدي</th><th>الاسم</th><th>اليوزر</th>
+        <th>الرصيد</th><th>الإحالات</th><th>الحالة</th>
+        <th>الانضمام</th><th>إجراءات</th>
+      </tr></thead>
+      <tbody>
+        ${users.map(u => `
+          <tr>
+            <td><code style="font-size:.78rem">${u.user_id}</code></td>
+            <td>${escHtml((u.first_name||"")+" "+(u.last_name||"")).trim() || "—"}</td>
+            <td>${u.username ? "@"+u.username : "—"}</td>
+            <td style="color:var(--green)">${(parseFloat(u.balance||0)).toFixed(2)}$</td>
+            <td>${u.referrals_count||0}</td>
+            <td><span class="badge-status ${u.is_banned?"bs-banned":"bs-ok"}">${u.is_banned?"محظور":"نشط"}</span></td>
+            <td style="color:var(--text2);font-size:.78rem">${(u.created_at||"").slice(0,10)}</td>
+            <td>
+              <button class="btn btn-sm btn-blue" onclick="showUserDetail(${u.user_id})">تفاصيل</button>
+              <button class="btn btn-sm ${u.is_banned?'btn-green':'btn-red'}" onclick="toggleBan(${u.user_id},${!u.is_banned})" style="margin-right:4px">
+                ${u.is_banned?"فك حظر":"حظر"}
+              </button>
+            </td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+
+  const pag = document.getElementById("users-pagination");
+  if (total_pages <= 1) { pag.innerHTML = ""; return; }
+  let btns = `<span class="page-info">إجمالي: ${total} | صفحة ${page+1}/${total_pages}</span>`;
+  if (page > 0) btns += `<button class="page-btn" onclick="usersPage=${page-1};loadUsers()">◀ السابق</button>`;
+  if (page < total_pages-1) btns += `<button class="page-btn" onclick="usersPage=${page+1};loadUsers()">التالي ▶</button>`;
+  pag.innerHTML = btns;
+}
+
+async function showUserDetail(uid) {
+  try {
+    const u = await apiJson(`/api/users/${uid}`);
+    const el = document.getElementById("main-content");
+    const txHtml = (u.transactions||[]).map(t=>`
+      <tr>
+        <td>${(t.created_at||"").slice(0,16)}</td>
+        <td style="color:${parseFloat(t.amount)>=0?"var(--green)":"var(--red)"}">
+          ${parseFloat(t.amount)>=0?"+":""}${parseFloat(t.amount).toFixed(2)}$
+        </td>
+        <td style="color:var(--text2)">${t.kind||""}</td>
+        <td style="font-size:.75rem;color:var(--text2)">${t.note||""}</td>
+      </tr>`).join("") || `<tr><td colspan="4" class="empty">لا توجد معاملات</td></tr>`;
+
+    el.innerHTML = `
+      <button class="btn btn-blue btn-sm" onclick="showPage('users')" style="margin-bottom:16px">⬅ رجوع</button>
+      <h2 style="margin-bottom:16px;font-size:1rem">👤 تفاصيل المستخدم — <code>${u.user_id}</code></h2>
+      <div class="section">
+        <div class="section-title">المعلومات الأساسية</div>
+        <div class="user-detail-grid">
+          <div class="detail-row"><div class="detail-label">الاسم</div><div class="detail-value">${escHtml((u.first_name||"")+" "+(u.last_name||"")).trim()||"—"}</div></div>
+          <div class="detail-row"><div class="detail-label">اليوزرنيم</div><div class="detail-value">${u.username?"@"+u.username:"—"}</div></div>
+          <div class="detail-row"><div class="detail-label">الرصيد</div><div class="detail-value" style="color:var(--green)">${parseFloat(u.balance||0).toFixed(2)}$</div></div>
+          <div class="detail-row"><div class="detail-label">الإحالات</div><div class="detail-value">${u.referrals_count||0}</div></div>
+          <div class="detail-row"><div class="detail-label">بطاقات العجلة</div><div class="detail-value">${u.wheel_cards||0}</div></div>
+          <div class="detail-row"><div class="detail-label">الحالة</div><div class="detail-value"><span class="badge-status ${u.is_banned?"bs-banned":"bs-ok"}">${u.is_banned?"محظور":"نشط"}</span></div></div>
+          <div class="detail-row"><div class="detail-label">تاريخ الانضمام</div><div class="detail-value">${(u.created_at||"").slice(0,10)}</div></div>
+          <div class="detail-row"><div class="detail-label">آخر نشاط</div><div class="detail-value">${(u.last_active||"").slice(0,10)}</div></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn ${u.is_banned?'btn-green':'btn-red'}" onclick="toggleBan(${u.user_id},${!u.is_banned});showPage('users')">
+            ${u.is_banned?"✅ فك الحظر":"🚫 حظر"}
+          </button>
+          <button class="btn btn-blue" onclick="openBalanceModal(${u.user_id},'${escHtml((u.first_name||u.user_id).toString())}',${parseFloat(u.balance||0).toFixed(2)})">
+            💵 تعديل الرصيد
+          </button>
+        </div>
+      </div>
+      ${u.active_number ? `
+      <div class="section">
+        <div class="section-title">📱 الرقم النشط</div>
+        <div class="user-detail-grid">
+          <div class="detail-row"><div class="detail-label">الرقم</div><div class="detail-value">${u.active_number.phone}</div></div>
+          <div class="detail-row"><div class="detail-label">الدولة</div><div class="detail-value">${u.active_number.country_name}</div></div>
+          <div class="detail-row"><div class="detail-label">النوع</div><div class="detail-value">${u.active_number.kind==="paid"?"💎 مدفوع":"📲 مجاني"}</div></div>
+          <div class="detail-row"><div class="detail-label">ينتهي</div><div class="detail-value">${(u.active_number.expires_at||"").slice(0,16)}</div></div>
+        </div>
+      </div>` : ""}
+      <div class="section">
+        <div class="section-title">💳 آخر 10 معاملات</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>النوع</th><th>ملاحظة</th></tr></thead>
+          <tbody>${txHtml}</tbody></table>
+        </div>
+      </div>`;
+  } catch(e) { notify("خطأ في جلب البيانات","error"); }
+}
+
+async function toggleBan(uid, banned) {
+  try {
+    await apiJson(`/api/users/${uid}/ban`, {method:"POST",body:JSON.stringify({banned})});
+    notify(banned ? "تم حظر المستخدم" : "تم فك الحظر");
+    await loadUsers();
+    renderUsersTable();
+  } catch { notify("خطأ","error"); }
+}
+
+function openBalanceModal(uid, name, current) {
+  balanceUserId = uid;
+  document.getElementById("balance-modal-title").textContent = `💵 تعديل رصيد ${name}`;
+  document.getElementById("balance-input").value = current;
+  document.getElementById("balance-modal").classList.add("open");
+}
+async function confirmBalance() {
+  const amt = parseFloat(document.getElementById("balance-input").value);
+  if (isNaN(amt)) { notify("مبلغ غير صالح","error"); return; }
+  try {
+    await apiJson(`/api/users/${balanceUserId}/balance`,{method:"POST",body:JSON.stringify({amount:amt})});
+    closeModal("balance-modal");
+    notify("تم تعديل الرصيد بنجاح");
+    loadUsers();
+  } catch { notify("خطأ في تعديل الرصيد","error"); }
+}
+
+// ── Deposits ───────────────────────────────────────────────────────
+let depositsFilter = "pending";
+async function renderDeposits(el) {
+  el.innerHTML = `
+    <h2 style="margin-bottom:18px;font-size:1.1rem">⬇️ طلبات الإيداع</h2>
+    <div class="tabs">
+      <div class="tab ${depositsFilter==='pending'?'active':''}" onclick="setDepositsFilter('pending')">⏳ معلقة</div>
+      <div class="tab ${depositsFilter==='approved'?'active':''}" onclick="setDepositsFilter('approved')">✅ موافق عليها</div>
+      <div class="tab ${depositsFilter==='rejected'?'active':''}" onclick="setDepositsFilter('rejected')">❌ مرفوضة</div>
+      <div class="tab ${depositsFilter==='all'?'active':''}" onclick="setDepositsFilter('all')">الكل</div>
+    </div>
+    <div class="section" style="padding:0" id="deposits-content">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>`;
+  const items = await apiJson(`/api/deposits?status=${depositsFilter}&limit=50`);
+  const wrap = document.getElementById("deposits-content");
+  if (!items.length) { wrap.innerHTML=`<div class="empty"><div class="icon">📭</div>لا توجد طلبات</div>`; return; }
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>المستخدم</th><th>الطريقة</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+    <tbody>
+      ${items.map(it=>`<tr>
+        <td>#${it.id}</td>
+        <td>${escHtml(it.user_name||"—")}<br><span style="color:var(--text2);font-size:.75rem">${it.username?"@"+it.username:""} <code>${it.user_id}</code></span></td>
+        <td>${it.method_label||it.method}</td>
+        <td style="color:var(--green);font-weight:700">${parseFloat(it.amount).toFixed(2)}$</td>
+        <td><span class="badge-status bs-${it.status}">${statusLabel(it.status)}</span></td>
+        <td style="color:var(--text2);font-size:.78rem">${(it.created_at||"").slice(0,16)}</td>
+        <td>${it.status==="pending"?`
+          <button class="btn btn-green btn-sm" onclick="approveDeposit(${it.id})">✅ قبول</button>
+          <button class="btn btn-red btn-sm" onclick="openReject(${it.id},'deposit')" style="margin-right:4px">❌ رفض</button>
+        `:""}</td>
+      </tr>`).join("")}
+    </tbody>
+  </table></div>`;
+}
+function setDepositsFilter(f) { depositsFilter=f; renderDeposits(document.getElementById("main-content")); }
+async function approveDeposit(id) {
+  if (!confirm("تأكيد قبول الإيداع؟")) return;
+  try { await apiJson(`/api/deposits/${id}/approve`,{method:"POST"}); notify("تم قبول الإيداع"); renderDeposits(document.getElementById("main-content")); }
+  catch { notify("خطأ","error"); }
+}
+
+// ── Withdrawals ────────────────────────────────────────────────────
+let withdrawalsFilter = "pending";
+async function renderWithdrawals(el) {
+  el.innerHTML = `
+    <h2 style="margin-bottom:18px;font-size:1.1rem">⬆️ طلبات السحب</h2>
+    <div class="tabs">
+      <div class="tab ${withdrawalsFilter==='pending'?'active':''}" onclick="setWdFilter('pending')">⏳ معلقة</div>
+      <div class="tab ${withdrawalsFilter==='approved'?'active':''}" onclick="setWdFilter('approved')">✅ موافق عليها</div>
+      <div class="tab ${withdrawalsFilter==='rejected'?'active':''}" onclick="setWdFilter('rejected')">❌ مرفوضة</div>
+    </div>
+    <div class="section" style="padding:0" id="wd-content">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>`;
+  const items = await apiJson(`/api/withdrawals?status=${withdrawalsFilter}&limit=50`);
+  const wrap = document.getElementById("wd-content");
+  if (!items.length) { wrap.innerHTML=`<div class="empty"><div class="icon">📭</div>لا توجد طلبات</div>`; return; }
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>المستخدم</th><th>الطريقة</th><th>المبلغ</th><th>العنوان</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+    <tbody>
+      ${items.map(it=>`<tr>
+        <td>#${it.id}</td>
+        <td>${escHtml(it.user_name||"—")}<br><span style="color:var(--text2);font-size:.75rem"><code>${it.user_id}</code></span></td>
+        <td>${it.method_label||it.method}</td>
+        <td style="color:var(--orange);font-weight:700">${parseFloat(it.amount).toFixed(2)}$</td>
+        <td><code style="font-size:.72rem;word-break:break-all">${escHtml(it.address||"")}</code></td>
+        <td><span class="badge-status bs-${it.status}">${statusLabel(it.status)}</span></td>
+        <td style="color:var(--text2);font-size:.78rem">${(it.created_at||"").slice(0,16)}</td>
+        <td>${it.status==="pending"?`
+          <button class="btn btn-green btn-sm" onclick="approveWd(${it.id})">✅ تم التحويل</button>
+          <button class="btn btn-red btn-sm" onclick="openReject(${it.id},'withdrawal')" style="margin-right:4px">❌ رفض</button>
+        `:""}</td>
+      </tr>`).join("")}
+    </tbody>
+  </table></div>`;
+}
+function setWdFilter(f) { withdrawalsFilter=f; renderWithdrawals(document.getElementById("main-content")); }
+async function approveWd(id) {
+  if (!confirm("تأكيد الموافقة على السحب؟")) return;
+  try { await apiJson(`/api/withdrawals/${id}/approve`,{method:"POST"}); notify("تم الموافقة على السحب"); renderWithdrawals(document.getElementById("main-content")); }
+  catch { notify("خطأ","error"); }
+}
+
+// ── Orders ─────────────────────────────────────────────────────────
+let ordersFilter = "pending";
+async function renderOrders(el) {
+  el.innerHTML = `
+    <h2 style="margin-bottom:18px;font-size:1.1rem">💎 طلبات الأرقام المدفوعة</h2>
+    <div class="tabs">
+      <div class="tab ${ordersFilter==='pending'?'active':''}" onclick="setOrdersFilter('pending')">⏳ معلقة</div>
+      <div class="tab ${ordersFilter==='paid'?'active':''}" onclick="setOrdersFilter('paid')">💰 مدفوعة</div>
+      <div class="tab ${ordersFilter==='active'?'active':''}" onclick="setOrdersFilter('active')">✅ نشطة</div>
+      <div class="tab ${ordersFilter==='rejected'?'active':''}" onclick="setOrdersFilter('rejected')">❌ مرفوضة</div>
+    </div>
+    <div class="section" style="padding:0" id="orders-content">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>`;
+  const items = await apiJson(`/api/orders?status=${ordersFilter}&limit=50`);
+  const wrap = document.getElementById("orders-content");
+  if (!items.length) { wrap.innerHTML=`<div class="empty"><div class="icon">📭</div>لا توجد طلبات</div>`; return; }
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>المستخدم</th><th>الخدمة</th><th>الرقم</th><th>الكود</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+    <tbody>
+      ${items.map(it=>`<tr>
+        <td>#${it.id}</td>
+        <td>${escHtml(it.user_name||"—")}<br><span style="color:var(--text2);font-size:.75rem"><code>${it.user_id}</code></span></td>
+        <td>${it.service_label||it.service}</td>
+        <td><code>${it.phone||"—"}</code></td>
+        <td><code style="font-size:.78rem">${it.purchase_code||"—"}</code></td>
+        <td><span class="badge-status bs-${it.status}">${statusLabel(it.status)}</span></td>
+        <td style="color:var(--text2);font-size:.78rem">${(it.created_at||"").slice(0,16)}</td>
+        <td>${(it.status==="pending"||it.status==="paid")?`
+          <button class="btn btn-red btn-sm" onclick="openReject(${it.id},'order')">❌ رفض+استرداد</button>
+        `:""}</td>
+      </tr>`).join("")}
+    </tbody>
+  </table></div>`;
+}
+function setOrdersFilter(f) { ordersFilter=f; renderOrders(document.getElementById("main-content")); }
+
+// ── Reject modal ───────────────────────────────────────────────────
+function openReject(id, type) {
+  rejectTarget = id; rejectType = type;
+  document.getElementById("reject-reason").value = "";
+  document.getElementById("reject-modal").classList.add("open");
+}
+async function confirmReject() {
+  const reason = document.getElementById("reject-reason").value.trim() || "رُفض";
+  try {
+    const ep = rejectType==="deposit" ? `/api/deposits/${rejectTarget}/reject`
+             : rejectType==="withdrawal" ? `/api/withdrawals/${rejectTarget}/reject`
+             : `/api/orders/${rejectTarget}/reject`;
+    await apiJson(ep, {method:"POST", body:JSON.stringify({reason})});
+    closeModal("reject-modal");
+    notify("تم الرفض بنجاح");
+    if (rejectType==="deposit") renderDeposits(document.getElementById("main-content"));
+    else if (rejectType==="withdrawal") renderWithdrawals(document.getElementById("main-content"));
+    else renderOrders(document.getElementById("main-content"));
+  } catch { notify("خطأ","error"); }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function statusLabel(s) {
+  return {pending:"معلق",approved:"موافق",rejected:"مرفوض",active:"نشط",paid:"مدفوع"}[s]||s;
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+document.querySelectorAll(".modal-overlay").forEach(m => {
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); });
+});
+</script>
+</body>
+</html>
